@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AIプロンプトチャート ビギナー</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --line:#dfe3ea;
+      --text:#1f2937;
+      --sub:#6b7280;
+      --accent:#111827;
+      --accent2:#2563eb;
+      --soft:#eef2ff;
+      --shadow:0 8px 24px rgba(15,23,42,.08);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.6;
+    }
+
+    .wrap{
+      max-width:1280px;
+      margin:0 auto;
+      padding:24px;
+    }
+
+    .hero{
+      margin-bottom:20px;
+    }
+
+    .hero h1{
+      margin:0 0 8px;
+      font-size:clamp(28px,4vw,42px);
+      line-height:1.2;
+    }
+
+    .hero p{
+      margin:0;
+      color:var(--sub);
+      max-width:920px;
+    }
+
+    .progress-wrap{
+      margin-top:16px;
+      width:100%;
+      background:#e5e7eb;
+      height:10px;
+      border-radius:999px;
+      overflow:hidden;
+    }
+
+    .progress-bar{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg,#111827,#2563eb);
+      transition:.25s ease;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns:320px 1fr;
+      gap:24px;
+      align-items:start;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+
+    .card-header{
+      padding:20px 20px 8px;
+    }
+
+    .card-header h2,
+    .card-header h3{
+      margin:0 0 6px;
+      line-height:1.35;
+    }
+
+    .card-desc{
+      color:var(--sub);
+      font-size:14px;
+    }
+
+    .card-body{
+      padding:20px;
+    }
+
+    .sidebar{
+      position:sticky;
+      top:16px;
+    }
+
+    .log-item{
+      margin-bottom:18px;
+    }
+
+    .log-label{
+      font-size:13px;
+      color:var(--sub);
+      margin-bottom:6px;
+    }
+
+    .log-value{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      padding:7px 10px;
+      border-radius:999px;
+      background:#f3f4f6;
+      border:1px solid var(--line);
+      font-size:13px;
+      line-height:1.2;
+    }
+
+    .badge.outline{
+      background:#fff;
+    }
+
+    .badge.current{
+      background:var(--soft);
+      border-color:var(--accent2);
+    }
+
+    .mobile-log-toggle{
+      display:none;
+      margin-bottom:16px;
+    }
+
+    .toggle-btn{
+      width:100%;
+      border:none;
+      background:transparent;
+      text-align:left;
+      font:inherit;
+      color:inherit;
+      cursor:pointer;
+      padding:0;
+    }
+
+    .step-title{
+      font-size:14px;
+      color:var(--sub);
+      margin-bottom:10px;
+    }
+
+    .question{
+      font-size:28px;
+      font-weight:700;
+      line-height:1.35;
+      margin:0 0 10px;
+    }
+
+    .question-desc{
+      font-size:15px;
+      color:var(--sub);
+      margin:0 0 18px;
+    }
+
+    .option-list{
+      display:grid;
+      gap:12px;
+    }
+
+    .option-btn,
+    .check-item{
+      width:100%;
+      text-align:left;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:16px;
+      padding:16px;
+      cursor:pointer;
+      transition:.2s ease;
+    }
+
+    .option-btn:hover,
+    .check-item:hover{
+      background:#fafafa;
+      border-color:#c9d1dc;
+    }
+
+    .option-btn.active,
+    .check-item.active{
+      border-color:var(--accent2);
+      background:var(--soft);
+    }
+
+    .option-title{
+      font-weight:700;
+      margin-bottom:4px;
+    }
+
+    .option-desc{
+      color:var(--sub);
+      font-size:14px;
+    }
+
+    .check-item{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+
+    .check-item input{
+      margin-top:4px;
+      transform:scale(1.15);
+      accent-color:var(--accent2);
+    }
+
+    .check-item.disabled{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .hint{
+      margin-top:16px;
+      padding:14px 16px;
+      border-radius:14px;
+      background:#f9fafb;
+      color:var(--sub);
+      font-size:14px;
+      border:1px dashed var(--line);
+    }
+
+    .actions{
+      margin-top:20px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .btn-group{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      border:none;
+      border-radius:12px;
+      padding:11px 16px;
+      font:inherit;
+      cursor:pointer;
+      transition:.2s ease;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+    }
+
+    .btn-primary{
+      background:var(--accent);
+      color:#fff;
+    }
+
+    .btn-primary:hover:not(:disabled){
+      background:#000;
+    }
+
+    .btn-secondary{
+      background:#fff;
+      border:1px solid var(--line);
+      color:var(--text);
+    }
+
+    .btn-secondary:hover:not(:disabled){
+      background:#f9fafb;
+    }
+
+    .result-stack{
+      display:grid;
+      gap:16px;
+    }
+
+    .result-text{
+      margin:0;
+    }
+
+    .codebox{
+      background:#0f172a;
+      color:#e5eefc;
+      border-radius:16px;
+      padding:16px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      font-size:13px;
+      white-space:pre-wrap;
+      word-break:break-word;
+      overflow:auto;
+      max-height:460px;
+      line-height:1.65;
+    }
+
+    .copy-row{
+      margin-top:12px;
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .small-note{
+      margin-top:8px;
+      color:var(--sub);
+      font-size:14px;
+    }
+
+    .ol{
+      margin:0;
+      padding-left:20px;
+    }
+
+    .ol li + li{
+      margin-top:8px;
+    }
+
+    @media (max-width: 900px){
+      .layout{
+        grid-template-columns:1fr;
+      }
+      .sidebar{
+        display:none;
+      }
+      .mobile-log-toggle{
+        display:block;
+      }
+      .question{
+        font-size:24px;
+      }
+      .wrap{
+        padding:16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>AIプロンプトチャート ビギナー</h1>
+      <p>GPTで新しいチャットを始めるための、初心者向けプロンプト作成チャートです。やりたいこと・用途・出し方を選ぶだけで、そのまま貼って使えるチャット用プロンプトを作成できます。</p>
+      <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    </section>
+
+    <div class="mobile-log-toggle">
+      <div class="card">
+        <div class="card-header">
+          <button class="toggle-btn" id="mobileLogBtn">
+            <h3>現在の選択内容 <span id="mobileArrow">▼</span></h3>
+            <div class="card-desc">選択内容と進行フローを確認できます</div>
+          </button>
+        </div>
+        <div class="card-body" id="mobileLogBody" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="card">
+          <div class="card-header">
+            <h3>現在の選択内容</h3>
+            <div class="card-desc">ここまでの内容がたまっていきます</div>
+          </div>
+          <div class="card-body" id="sidebarLog"></div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+          <div class="card-header">
+            <h3>進行フロー</h3>
+            <div class="card-desc">今どこまで進んでいるか確認できます</div>
+          </div>
+          <div class="card-body" id="flowLog"></div>
+        </div>
+      </aside>
+
+      <main id="app"></main>
+    </div>
+  </div>
+
+  <script>
+    const step1Options = [
+      {
+        value: "image_pop",
+        label: "画像やPOPを作りたい",
+        description: "画像作成やPOPの指示整理、修正内容の整理に使います。"
+      },
+      {
+        value: "sns_text",
+        label: "SNS用の文章を作りたい",
+        description: "XやLINEなどで使う投稿文・案内文の作成に使います。"
+      },
+      {
+        value: "polish_text",
+        label: "文章を整えたい",
+        description: "読みやすくしたい、短くしたい、印象を整えたい時に使います。"
+      },
+      {
+        value: "read_report",
+        label: "レポートを読みたい",
+        description: "要点整理、問題点整理、比較、改善案出しに使います。"
+      },
+      {
+        value: "check_content",
+        label: "問題ないか確認したい",
+        description: "表現や内容、使って大丈夫かどうかの確認に使います。"
+      },
+      {
+        value: "review_training",
+        label: "研修内容を振り返りたい",
+        description: "研修内容の要点整理や学びの言語化、共有用整理に使います。"
+      }
+    ];
+
+    const step2Map = {
+      image_pop: [
+        { value: "new_image", label: "新しく作りたい", description: "ゼロから画像やPOPの方向性を作ります。" },
+        { value: "fix_existing", label: "今あるものを直したい", description: "既存の画像やPOPを修正する方向で使います。" },
+        { value: "change_text", label: "文言を変えたい", description: "文章や表記だけを調整したい時に使います。" },
+        { value: "change_mood", label: "雰囲気を変えたい", description: "高級感・かわいさ・季節感など印象を変えたい時に使います。" }
+      ],
+      sns_text: [
+        { value: "x_post", label: "X投稿文", description: "X向けの投稿文を作ります。" },
+        { value: "line_text", label: "LINE文", description: "LINE配信文や通知文を作ります。" },
+        { value: "notice_text", label: "告知文", description: "イベントや新装などの告知に使います。" },
+        { value: "guide_text", label: "案内文", description: "来店案内やサービス案内などに使います。" }
+      ],
+      polish_text: [
+        { value: "readable", label: "読みやすくしたい", description: "文の流れや分かりやすさを整えます。" },
+        { value: "shorter", label: "短くしたい", description: "要点を残しつつ短くまとめます。" },
+        { value: "polite", label: "丁寧にしたい", description: "やわらかく失礼のない表現へ整えます。" },
+        { value: "change_tone", label: "雰囲気を変えたい", description: "印象やトーンを変えたい時に使います。" }
+      ],
+      read_report: [
+        { value: "summary_report", label: "要点を知りたい", description: "まず重要なポイントだけをつかみたい時に使います。" },
+        { value: "issues_report", label: "問題点を知りたい", description: "課題や弱い部分を見つけたい時に使います。" },
+        { value: "improve_report", label: "改善案を見たい", description: "次の打ち手や改善案を整理したい時に使います。" },
+        { value: "compare_report", label: "比較しながら見たい", description: "複数内容を比べながら整理したい時に使います。" }
+      ],
+      check_content: [
+        { value: "expression_check", label: "表現に問題がないか", description: "言い回しや印象に問題がないか確認します。" },
+        { value: "compliance_check", label: "ルール的に大丈夫か", description: "コンプラや運用ルールの観点で確認します。" },
+        { value: "clarity_check", label: "伝わりやすいか", description: "相手に分かりやすく伝わるか確認します。" },
+        { value: "ready_check", label: "このまま使えるか", description: "大きな修正なしで使えるか確認します。" }
+      ],
+      review_training: [
+        { value: "training_points", label: "要点を整理したい", description: "研修内容の重要ポイントを整理します。" },
+        { value: "training_learning", label: "学びを整理したい", description: "気づきや学びを言語化したい時に使います。" },
+        { value: "training_practice", label: "実務に落としたい", description: "現場でどう活かすかまで整理します。" },
+        { value: "training_share", label: "共有用にまとめたい", description: "他人へ伝えるための形に整理します。" }
+      ]
+    };
+
+    const step3Options = [
+      {
+        value: "clear",
+        label: "分かりやすくしてほしい",
+        description: "専門的すぎず、読み手が理解しやすい形を重視します。"
+      },
+      {
+        value: "short",
+        label: "短くまとめてほしい",
+        description: "要点を優先して、長すぎない形に整えます。"
+      },
+      {
+        value: "good_impression",
+        label: "印象よく整えてほしい",
+        description: "見た人に良い印象を持たれやすい形を重視します。"
+      },
+      {
+        value: "thorough",
+        label: "漏れなく整理してほしい",
+        description: "抜けを減らし、必要な要素を整理して出力します。"
+      }
+    ];
+
+    const steps = [
+      {
+        key: "goal",
+        step: 1,
+        title: "何をしたいですか？",
+        description: "最も近いものを1つ選んでください。ここで選んだ内容に応じて、次の選択肢が変わります。",
+        type: "single"
+      },
+      {
+        key: "target",
+        step: 2,
+        title: "何について使いますか？",
+        description: "使いたい対象や用途に近いものを1つ選んでください。",
+        type: "single"
+      },
+      {
+        key: "style",
+        step: 3,
+        title: "どんな形で出してほしいですか？",
+        description: "望む出力の方向性を3つまで選んでください。",
+        type: "multi",
+        max: 3,
+        hint: "迷った場合は、まず「分かりやすくしてほしい」から選ぶと使いやすいです。"
+      }
+    ];
+
+    const state = {
+      currentStep: 0,
+      goal: null,
+      target: null,
+      style: []
+    };
+
+    function getStep1Label(value){
+      const found = step1Options.find(o => o.value === value);
+      return found ? found.label : "未選択";
+    }
+
+    function getStep2Options(){
+      return step2Map[state.goal] || [];
+    }
+
+    function getStep2Label(value){
+      const found = getStep2Options().find(o => o.value === value);
+      return found ? found.label : "未選択";
+    }
+
+    function getStep3Label(value){
+      const found = step3Options.find(o => o.value === value);
+      return found ? found.label : value;
+    }
+
+    function getStep3Labels(values){
+      if(!values || !values.length) return "未選択";
+      return values.map(getStep3Label);
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function getChatSummary(){
+      const goalTargetMap = {
+        x_post: "X投稿文を作るチャット",
+        line_text: "LINE文を作るチャット",
+        notice_text: "告知文を作るチャット",
+        guide_text: "案内文を作るチャット",
+
+        new_image: "画像やPOPの方向性を作るチャット",
+        fix_existing: "画像やPOPの修正内容を整理するチャット",
+        change_text: "画像やPOPの文言修正を整理するチャット",
+        change_mood: "画像やPOPの雰囲気変更を整理するチャット",
+
+        readable: "文章を読みやすく整えるチャット",
+        shorter: "文章を短く整えるチャット",
+        polite: "文章を丁寧に整えるチャット",
+        change_tone: "文章の雰囲気を整えるチャット",
+
+        summary_report: "レポートの要点を整理するチャット",
+        issues_report: "レポートの問題点を整理するチャット",
+        improve_report: "レポートの改善案を考えるチャット",
+        compare_report: "レポートを比較しながら読むチャット",
+
+        expression_check: "表現に問題がないか確認するチャット",
+        compliance_check: "ルール面の確認を行うチャット",
+        clarity_check: "伝わりやすさを確認するチャット",
+        ready_check: "このまま使えるか確認するチャット",
+
+        training_points: "研修内容の要点を整理するチャット",
+        training_learning: "研修内容の学びを整理するチャット",
+        training_practice: "研修内容を実務に落とし込むチャット",
+        training_share: "研修内容を共有用に整理するチャット"
+      };
+
+      return goalTargetMap[state.target] || "用途に合うチャット";
+    }
+
+    function getCapabilityList(){
+      const capabilityMap = {
+        x_post: [
+          "投稿文のたたき台を作れます",
+          "言い換えや雰囲気調整ができます",
+          "複数案を出して比較できます"
+        ],
+        line_text: [
+          "LINE文のたたき台を作れます",
+          "読みやすい通知文へ整えられます",
+          "複数案を比較できます"
+        ],
+        notice_text: [
+          "告知文の骨組みを作れます",
+          "強調したい内容を整理できます",
+          "使いやすい文面へ整えられます"
+        ],
+        guide_text: [
+          "案内文のたたき台を作れます",
+          "分かりやすい順番へ整えられます",
+          "読み手に伝わりやすく直せます"
+        ],
+
+        new_image: [
+          "画像やPOPの方向性を整理できます",
+          "必要な指示内容を言語化できます",
+          "作成前のたたき台を作れます"
+        ],
+        fix_existing: [
+          "修正ポイントを整理できます",
+          "直すべき内容を順序立てて出せます",
+          "修正指示のたたき台を作れます"
+        ],
+        change_text: [
+          "文言変更の方向性を整理できます",
+          "差し替え案を作れます",
+          "見せ方に合う表現を出せます"
+        ],
+        change_mood: [
+          "雰囲気変更の方向性を整理できます",
+          "印象を言語化して伝えられます",
+          "見せ方の調整案を作れます"
+        ],
+
+        readable: [
+          "文章を読みやすく整えられます",
+          "流れや言い回しを改善できます",
+          "伝わりやすい表現へ直せます"
+        ],
+        shorter: [
+          "文章を短くできます",
+          "要点だけ残して整理できます",
+          "冗長な部分を減らせます"
+        ],
+        polite: [
+          "文章を丁寧に整えられます",
+          "やわらかい表現へ言い換えられます",
+          "失礼の少ない文面へ整えられます"
+        ],
+        change_tone: [
+          "文章の雰囲気を整えられます",
+          "トーン変更の言い換えができます",
+          "印象に合う形へ調整できます"
+        ],
+
+        summary_report: [
+          "レポートの要点を整理できます",
+          "重要ポイントを短くつかめます",
+          "読むべきポイントを明確にできます"
+        ],
+        issues_report: [
+          "レポートの問題点を整理できます",
+          "弱い部分を見つけやすくなります",
+          "改善前提の読み方ができます"
+        ],
+        improve_report: [
+          "改善案のたたき台を出せます",
+          "次の打ち手を整理できます",
+          "レポートを実務につなげられます"
+        ],
+        compare_report: [
+          "複数内容を比較できます",
+          "違いや共通点を整理できます",
+          "比較しながら判断しやすくなります"
+        ],
+
+        expression_check: [
+          "表現の気になる点を見つけられます",
+          "言い換え案を出せます",
+          "印象面の確認に使えます"
+        ],
+        compliance_check: [
+          "ルール面の確認に使えます",
+          "注意点を洗い出せます",
+          "修正が必要か判断しやすくなります"
+        ],
+        clarity_check: [
+          "伝わりやすさを確認できます",
+          "分かりにくい箇所を見つけられます",
+          "改善案も一緒に出せます"
+        ],
+        ready_check: [
+          "そのまま使えるか確認できます",
+          "必要な修正の有無を見られます",
+          "最終チェックに使えます"
+        ],
+
+        training_points: [
+          "研修内容の要点を整理できます",
+          "重要ポイントをつかみやすくなります",
+          "復習用にまとめられます"
+        ],
+        training_learning: [
+          "学びや気づきを整理できます",
+          "自分の言葉でまとめやすくなります",
+          "振り返りのたたき台を作れます"
+        ],
+        training_practice: [
+          "実務への落とし込みができます",
+          "次に何をすべきか整理できます",
+          "現場での活かし方を考えられます"
+        ],
+        training_share: [
+          "共有用の形にまとめられます",
+          "伝わりやすく整理できます",
+          "他人向けの説明に使えます"
+        ]
+      };
+
+      return capabilityMap[state.target] || [
+        "用途に合う形で整理できます",
+        "たたき台を作れます",
+        "新しいチャットですぐ使い始められます"
+      ];
+    }
+
+    function getReasonList(){
+      const reasons = [];
+
+      const goalItem = step1Options.find(o => o.value === state.goal);
+      const targetItem = getStep2Options().find(o => o.value === state.target);
+
+      if(goalItem){
+        reasons.push(`${goalItem.label}が目的として選ばれています`);
+      }
+      if(targetItem){
+        reasons.push(`${targetItem.label}という用途に絞られています`);
+      }
+      if(state.style.includes("clear")){
+        reasons.push("分かりやすさを重視する条件が選ばれています");
+      }
+      if(state.style.includes("short")){
+        reasons.push("短くまとめる条件が選ばれています");
+      }
+      if(state.style.includes("good_impression")){
+        reasons.push("印象よく整える条件が選ばれています");
+      }
+      if(state.style.includes("thorough")){
+        reasons.push("漏れなく整理する条件が選ばれています");
+      }
+
+      return reasons;
+    }
+
+    function buildPrompt(){
+      const chatSummary = getChatSummary();
+      const styleLabels = getStep3Labels(state.style);
+      const styleText = Array.isArray(styleLabels) ? styleLabels.join(" / ") : styleLabels;
+
+      const baseRoleMap = {
+        image_pop: "画像やPOPの方向性や修正内容を整理するアシスタント",
+        sns_text: "SNS用文章を作成するアシスタント",
+        polish_text: "文章を整えるアシスタント",
+        read_report: "レポートを読み解いて整理するアシスタント",
+        check_content: "表現や内容を確認するアシスタント",
+        review_training: "研修内容を振り返って整理するアシスタント"
+      };
+
+      const goalInputGuideMap = {
+        image_pop: "画像やPOPの目的、使いたい文言、雰囲気、修正したい点などを入力してください。",
+        sns_text: "作りたい文章の目的、伝えたい内容、媒体、入れたい要素などを入力してください。",
+        polish_text: "整えたい元の文章を入力してください。必要なら、どの方向に直したいかも補足してください。",
+        read_report: "読みたいレポートや文章を入力してください。必要なら、特に見たい観点も補足してください。",
+        check_content: "確認したい文章や内容を入力してください。必要なら、どこが気になっているかも補足してください。",
+        review_training: "振り返りたい研修内容やメモを入力してください。必要なら、特に整理したい点も補足してください。"
+      };
+
+      return `# 役割
+あなたは「${chatSummary}」として動く、${baseRoleMap[state.goal] || "実務補助アシスタント"}です。
+
+# 目的
+利用者が入力した内容をもとに、用途に合った形で実務に使いやすい出力を行ってください。
+
+# このチャットでやりたいこと
+- ${getChatSummary()}
+
+# 出力方針
+- ${styleText} を意識して出力してください
+- 伝わりやすい順番で整理してください
+- 必要に応じて、たたき台・修正案・補足案を出してください
+- 不明点は勝手に断定せず、必要に応じて補足前提を置いてください
+
+# 出力の基本ルール
+- 実務でそのまま使いやすい形を優先する
+- 長すぎる説明より、使える内容を優先する
+- 必要なら箇条書きや見出しを使って整理する
+- 元の意図がある場合は、なるべくそれを崩さない
+
+# 入力案内
+${goalInputGuideMap[state.goal] || "必要な内容を入力してください。"}
+
+# 最初の対応
+利用者が内容を入力したら、目的に合った形で整理・作成・確認を行ってください。`;
+    }
+
+    function canProceed(){
+      const step = steps[state.currentStep];
+      if(!step) return true;
+
+      if(step.key === "goal"){
+        return !!state.goal;
+      }
+      if(step.key === "target"){
+        return !!state.target;
+      }
+      if(step.key === "style"){
+        return state.style.length > 0;
+      }
+      return false;
+    }
+
+    function updateProgress(){
+      const progress = state.currentStep >= steps.length ? 100 : (state.currentStep / steps.length) * 100;
+      document.getElementById("progressBar").style.width = progress + "%";
+    }
+
+    function getFlowItems(){
+      return [
+        "① やりたいことを選ぶ",
+        "② 用途を選ぶ",
+        "③ 出し方を選ぶ",
+        "④ 結果を確認する",
+        "⑤ GPTで使い始める"
+      ];
+    }
+
+    function renderFlowHtml(){
+      const flowItems = getFlowItems();
+      let currentIndex = state.currentStep;
+      if(state.currentStep >= steps.length){
+        currentIndex = 3;
+      }
+
+      return `
+        <div class="log-item">
+          <div class="log-value" style="display:grid; gap:10px;">
+            ${flowItems.map((item, index) => {
+              let klass = "badge outline";
+              if(index < currentIndex){
+                klass = "badge";
+              }else if(index === currentIndex){
+                klass = "badge current";
+              }
+              return `<div class="${klass}" style="width:100%; justify-content:flex-start;">${escapeHtml(item)}</div>`;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLogHtml(){
+      const styleLabels = getStep3Labels(state.style);
+
+      return `
+        <div class="log-item">
+          <div class="log-label">やりたいこと</div>
+          <div class="log-value"><span class="badge">${escapeHtml(getStep1Label(state.goal))}</span></div>
+        </div>
+
+        <div class="log-item">
+          <div class="log-label">用途</div>
+          <div class="log-value"><span class="badge">${escapeHtml(getStep2Label(state.target))}</span></div>
+        </div>
+
+        <div class="log-item">
+          <div class="log-label">出し方</div>
+          <div class="log-value">
+            ${
+              Array.isArray(styleLabels)
+                ? styleLabels.map(v => `<span class="badge outline">${escapeHtml(v)}</span>`).join("")
+                : `<span class="badge">${escapeHtml(styleLabels)}</span>`
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStep(){
+      const app = document.getElementById("app");
+
+      if(state.currentStep >= steps.length){
+        renderResults();
+        return;
+      }
+
+      const step = steps[state.currentStep];
+      let options = [];
+
+      if(step.key === "goal"){
+        options = step1Options;
+      }else if(step.key === "target"){
+        options = getStep2Options();
+      }else if(step.key === "style"){
+        options = step3Options;
+      }
+
+      let optionsHtml = "";
+
+      if(step.type === "single"){
+        optionsHtml = options.map(opt => {
+          const active = state[step.key] === opt.value;
+          return `
+            <button class="option-btn ${active ? "active" : ""}" onclick="selectSingle('${step.key}','${opt.value}')">
+              <div class="option-title">${escapeHtml(opt.label)}</div>
+              <div class="option-desc">${escapeHtml(opt.description || "")}</div>
+            </button>
+          `;
+        }).join("");
+      }
+
+      if(step.type === "multi"){
+        const selected = state[step.key];
+        optionsHtml = options.map(opt => {
+          const checked = selected.includes(opt.value);
+          const limitReached = step.max ? selected.length >= step.max && !checked : false;
+
+          return `
+            <label class="check-item ${checked ? "active" : ""} ${limitReached ? "disabled" : ""}">
+              <input
+                type="checkbox"
+                ${checked ? "checked" : ""}
+                ${limitReached ? "disabled" : ""}
+                onchange="toggleMulti('${step.key}','${opt.value}',${step.max || 999})"
+              />
+              <div>
+                <div class="option-title">${escapeHtml(opt.label)}</div>
+                <div class="option-desc">${escapeHtml(opt.description || "")}</div>
+              </div>
+            </label>
+          `;
+        }).join("");
+      }
+
+      const hintHtml = step.hint ? `<div class="hint">${escapeHtml(step.hint)}</div>` : "";
+
+      app.innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <div class="step-title">STEP ${step.step} / ${steps.length}</div>
+            <h2 class="question">${escapeHtml(step.title)}</h2>
+            <p class="question-desc">${escapeHtml(step.description)}</p>
+          </div>
+
+          <div class="card-body">
+            <div class="option-list">${optionsHtml}</div>
+            ${hintHtml}
+
+            <div class="actions">
+              <button class="btn btn-secondary" onclick="prevStep()" ${state.currentStep === 0 ? "disabled" : ""}>戻る</button>
+              <div class="btn-group">
+                <button class="btn btn-secondary" onclick="resetAll()">最初からやり直す</button>
+                <button class="btn btn-primary" onclick="nextStep()" ${canProceed() ? "" : "disabled"}>次へ</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderResults(){
+      const app = document.getElementById("app");
+      const chatSummary = getChatSummary();
+      const capabilities = getCapabilityList();
+      const reasons = getReasonList();
+      const prompt = buildPrompt();
+
+      app.innerHTML = `
+        <div class="result-stack">
+          <div class="card">
+            <div class="card-header">
+              <h2>あなたに合うチャット用プロンプトがまとまりました</h2>
+              <div class="card-desc">選んだ内容をもとに、そのままGPTへ貼って使えるプロンプトを作成しました。</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>1. あなたが選んだ内容</h3></div>
+            <div class="card-body">
+              ${renderLogHtml()}
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>2. あなたのやりたいことはこれです</h3></div>
+            <div class="card-body">
+              <p class="result-text"><strong>${escapeHtml(chatSummary)}</strong></p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>3. この形になった理由</h3></div>
+            <div class="card-body">
+              <ol class="ol">
+                ${reasons.map(reason => `<li>${escapeHtml(reason)}</li>`).join("")}
+              </ol>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>4. このチャットでできること</h3></div>
+            <div class="card-body">
+              <ol class="ol">
+                ${capabilities.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
+              </ol>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>5. GPTに貼る文章</h3></div>
+            <div class="card-body">
+              <div class="codebox" id="promptBox">${escapeHtml(prompt)}</div>
+              <div class="copy-row">
+                <button class="btn btn-secondary" onclick="copyText('promptBox')">コピー</button>
+                <a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">GPTを開く</a>
+              </div>
+              <div class="small-note">コピーした文章を新しいGPTチャットに貼り付けて使い始めてください。</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>6. このあとやること</h3></div>
+            <div class="card-body">
+              <ol class="ol">
+                <li>「GPTに貼る文章」をコピーする</li>
+                <li>「GPTを開く」を押して新しいチャットを開く</li>
+                <li>コピーした文章を貼り付ける</li>
+                <li>使いたい内容を入力してスタートする</li>
+              </ol>
+
+              <div class="actions" style="margin-top:18px;">
+                <button class="btn btn-secondary" onclick="backToLastStep()">入力へ戻る</button>
+                <button class="btn btn-secondary" onclick="resetAll()">最初からやり直す</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAll(){
+      document.getElementById("sidebarLog").innerHTML = renderLogHtml();
+      document.getElementById("flowLog").innerHTML = renderFlowHtml();
+
+      const mobileLogBody = document.getElementById("mobileLogBody");
+      mobileLogBody.innerHTML = `
+        ${renderLogHtml()}
+        <hr style="border:none; border-top:1px solid #e5e7eb; margin:16px 0;">
+        <div style="font-weight:700; margin-bottom:10px;">進行フロー</div>
+        ${renderFlowHtml()}
+      `;
+
+      updateProgress();
+      renderStep();
+    }
+
+    function selectSingle(key, value){
+      if(key === "goal" && state.goal !== value){
+        state.goal = value;
+        state.target = null;
+      }else{
+        state[key] = value;
+      }
+      renderAll();
+    }
+
+    function toggleMulti(key, value, max){
+      const arr = state[key];
+      const index = arr.indexOf(value);
+
+      if(index >= 0){
+        arr.splice(index, 1);
+      }else{
+        if(arr.length >= max) return;
+        arr.push(value);
+      }
+
+      renderAll();
+    }
+
+    function nextStep(){
+      if(!canProceed()) return;
+      state.currentStep++;
+      renderAll();
+    }
+
+    function prevStep(){
+      if(state.currentStep > 0){
+        state.currentStep--;
+        renderAll();
+      }
+    }
+
+    function backToLastStep(){
+      state.currentStep = steps.length - 1;
+      renderAll();
+    }
+
+    function resetAll(){
+      state.currentStep = 0;
+      state.goal = null;
+      state.target = null;
+      state.style = [];
+      renderAll();
+    }
+
+    function copyText(elementId){
+      const text = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("コピーしました");
+      });
+    }
+
+    document.getElementById("mobileLogBtn").addEventListener("click", () => {
+      const body = document.getElementById("mobileLogBody");
+      const arrow = document.getElementById("mobileArrow");
+      const open = body.style.display === "block";
+      body.style.display = open ? "none" : "block";
+      arrow.textContent = open ? "▼" : "▲";
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>
